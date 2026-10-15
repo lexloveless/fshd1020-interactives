@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Check Your Understanding: Learn 1.1</title>
+<style>
+  :root {
+    --sage: #C2D3B5;
+    --sage-dark: #a9bd99;
+    --sage-light: #f3f7ef;
+    --line: #dfe7d7;
+    --ink: #1f2b18;
+    --muted: #4a5a40;
+    --good: #2f6b2a;
+    --good-bg: #e8f3e3;
+    --warn: #8a5a00;
+    --warn-bg: #fff4dc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    background: #ffffff;
+    color: #2d2d2d;
+    font-family: 'Lato', 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  .progress { display: flex; gap: 8px; align-items: center; margin: 0 0 20px; color: var(--muted); font-size: .95em; }
+  .dots { display: flex; gap: 6px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--sage-dark); background: #fff; }
+  .dot.done { background: var(--sage-dark); }
+  .card { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 0 0 20px; }
+  .card-head { background: var(--sage); padding: 10px 20px; }
+  .card-head .eyebrow { display: block; font-size: .75em; letter-spacing: .08em; text-transform: uppercase; color: #3a4a30; font-weight: bold; }
+  .card-head h2 { margin: 0; font-size: 1.15em; color: var(--ink); }
+  .card-body { padding: 16px 20px; }
+  .card-body > p { margin: 0 0 12px; }
+  .q { margin: 0 0 14px; }
+  .q > label { display: block; font-weight: bold; margin-bottom: 6px; color: var(--ink); }
+  .inline-input { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  input[type="number"] {
+    width: 120px; padding: 8px 10px; font-size: 1em; border: 2px solid var(--sage-dark); border-radius: 6px; font-family: inherit;
+  }
+  input[type="number"]:focus { outline: 3px solid #8fa57e; outline-offset: 1px; }
+  fieldset { border: none; margin: 0; padding: 0; }
+  legend { font-weight: bold; color: var(--ink); margin-bottom: 8px; padding: 0; }
+  .options { display: flex; flex-wrap: wrap; gap: 8px; }
+  .stack { flex-direction: column; align-items: stretch; }
+  .opt {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 2px solid var(--line);
+    border-radius: 20px; background: #fff; cursor: pointer; user-select: none;
+  }
+  .stack .opt { border-radius: 8px; }
+  .opt:has(input:checked) { border-color: var(--sage-dark); background: var(--sage-light); }
+  .opt.correct { border-color: var(--good); background: var(--good-bg); }
+  .opt.wrong { border-color: #b4542f; background: #fbebe4; }
+  .opt input { accent-color: #5d7a4a; width: 18px; height: 18px; margin: 0; }
+  table { border-collapse: collapse; margin: 0 0 14px; width: 100%; max-width: 420px; font-size: .95em; }
+  th, td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; }
+  thead th { background: var(--sage); color: var(--ink); }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  button {
+    font-family: inherit; font-size: 1em; font-weight: bold; padding: 10px 20px; border-radius: 6px; cursor: pointer;
+    border: 2px solid var(--ink); background: var(--ink); color: #fff;
+  }
+  button:hover { background: #33452a; }
+  button.secondary { background: #fff; color: var(--ink); }
+  button.secondary:hover { background: var(--sage-light); }
+  button:focus-visible { outline: 3px solid #8fa57e; outline-offset: 2px; }
+  button[hidden] { display: none; }
+  .feedback { margin-top: 14px; border-radius: 6px; padding: 12px 16px; display: none; }
+  .feedback.show { display: block; }
+  .feedback.good { background: var(--good-bg); border-left: 6px solid var(--good); }
+  .feedback.partial { background: var(--warn-bg); border-left: 6px solid #d9a441; }
+  .feedback h3 { margin: 0 0 4px; font-size: 1em; }
+  .feedback.good h3 { color: var(--good); }
+  .feedback.partial h3 { color: var(--warn); }
+  .feedback p { margin: 0; }
+  .summary { background: var(--sage); border-radius: 8px; padding: 16px 22px; display: none; margin: 0 0 20px; }
+  .summary.show { display: block; }
+  .summary h2 { margin: 0 0 6px; color: var(--ink); font-size: 1.2em; }
+  .summary p { margin: 0; color: var(--ink); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="progress" aria-live="polite">
+    <div class="dots" aria-hidden="true">
+      <span class="dot" id="dot1"></span><span class="dot" id="dot2"></span><span class="dot" id="dot3"></span><span class="dot" id="dot4"></span><span class="dot" id="dot5"></span>
+    </div>
+    <span id="progressText">0 of 5 correct</span>
+  </div>
+
+  <!-- Q1 -->
+  <section class="card" aria-labelledby="q1title">
+    <div class="card-head"><span class="eyebrow">Question 1</span><h2 id="q1title">What's in a carbohydrate?</h2></div>
+    <div class="card-body">
+      <form id="q1" novalidate>
+        <fieldset class="q">
+          <legend>Carbohydrates are made from which elements? Select all that apply.</legend>
+          <div class="options">
+            <label class="opt"><input type="checkbox" value="carbon" data-right> Carbon</label>
+            <label class="opt"><input type="checkbox" value="nitrogen"> Nitrogen</label>
+            <label class="opt"><input type="checkbox" value="hydrogen" data-right> Hydrogen</label>
+            <label class="opt"><input type="checkbox" value="calcium"> Calcium</label>
+            <label class="opt"><input type="checkbox" value="oxygen" data-right> Oxygen</label>
+          </div>
+        </fieldset>
+        <div class="actions">
+          <button type="submit">Check</button>
+          <button type="button" class="secondary" data-retry="q1" hidden>Try again</button>
+        </div>
+      </form>
+      <div class="feedback" id="fb1" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- Q2 -->
+  <section class="card" aria-labelledby="q2title">
+    <div class="card-head"><span class="eyebrow">Question 2</span><h2 id="q2title">Where carbs come from</h2></div>
+    <div class="card-body">
+      <form id="q2" novalidate>
+        <fieldset class="q">
+          <legend>Which living things make carbohydrates and use them to store energy?</legend>
+          <div class="options stack">
+            <label class="opt"><input type="radio" name="q2" value="animals"> Animals</label>
+            <label class="opt"><input type="radio" name="q2" value="plants" data-right> Plants</label>
+            <label class="opt"><input type="radio" name="q2" value="fungi"> Fungi</label>
+            <label class="opt"><input type="radio" name="q2" value="humans"> Humans</label>
+          </div>
+        </fieldset>
+        <div class="actions">
+          <button type="submit">Check</button>
+          <button type="button" class="secondary" data-retry="q2" hidden>Try again</button>
+        </div>
+      </form>
+      <div class="feedback" id="fb2" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- Q3 -->
+  <section class="card" aria-labelledby="q3title">
+    <div class="card-head"><span class="eyebrow">Question 3</span><h2 id="q3title">Energy from carbs</h2></div>
+    <div class="card-body">
+      <form id="q3" novalidate>
+        <div class="q">
+          <label for="q3a">How many calories does 1 gram of carbohydrate provide?</label>
+          <div class="inline-input"><input type="number" id="q3a" step="any" inputmode="decimal"> <span>calories</span></div>
+        </div>
+        <div class="actions">
+          <button type="submit">Check</button>
+          <button type="button" class="secondary" data-retry="q3" hidden>Try again</button>
+        </div>
+      </form>
+      <div class="feedback" id="fb3" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- Q4 -->
+  <section class="card" aria-labelledby="q4title">
+    <div class="card-head"><span class="eyebrow">Question 4</span><h2 id="q4title">Fuel for the body</h2></div>
+    <div class="card-body">
+      <form id="q4" novalidate>
+        <fieldset class="q">
+          <legend>Which parts of the body depend most on carbohydrates for fuel? Select all that apply.</legend>
+          <div class="options">
+            <label class="opt"><input type="checkbox" value="brain" data-right> Brain</label>
+            <label class="opt"><input type="checkbox" value="hair"> Hair</label>
+            <label class="opt"><input type="checkbox" value="muscles" data-right> Muscles</label>
+            <label class="opt"><input type="checkbox" value="nails"> Fingernails</label>
+            <label class="opt"><input type="checkbox" value="blood" data-right> Blood cells</label>
+          </div>
+        </fieldset>
+        <div class="actions">
+          <button type="submit">Check</button>
+          <button type="button" class="secondary" data-retry="q4" hidden>Try again</button>
+        </div>
+      </form>
+      <div class="feedback" id="fb4" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- Q5 -->
+  <section class="card" aria-labelledby="q5title">
+    <div class="card-head"><span class="eyebrow">Question 5</span><h2 id="q5title">Count the carbs</h2></div>
+    <div class="card-body">
+      <p>Breakfast is <strong>1 serving of oatmeal</strong> (grain), <strong>1 banana</strong> (fruit), and <strong>1 cup of milk</strong> (dairy). Use the table from Learn 1.1.</p>
+      <table>
+        <caption style="text-align: left; font-size: .9em; color: var(--muted); padding-bottom: 4px;">Carbohydrate per serving</caption>
+        <thead><tr><th scope="col">Food group</th><th scope="col">Carbs per serving</th></tr></thead>
+        <tbody>
+          <tr><th scope="row" style="font-weight: normal;">Grains</th><td>15 g</td></tr>
+          <tr><th scope="row" style="font-weight: normal;">Fruits</th><td>18 g</td></tr>
+          <tr><th scope="row" style="font-weight: normal;">Dairy</th><td>12 g</td></tr>
+          <tr><th scope="row" style="font-weight: normal;">Vegetables</th><td>5 g</td></tr>
+        </tbody>
+      </table>
+      <form id="q5" novalidate>
+        <div class="q">
+          <label for="q5a">a) About how many grams of carbohydrate are in this breakfast?</label>
+          <div class="inline-input"><input type="number" id="q5a" step="any" inputmode="decimal"> <span>grams</span></div>
+        </div>
+        <div class="q">
+          <label for="q5b">b) How many calories come from those carbohydrates?</label>
+          <div class="inline-input"><input type="number" id="q5b" step="any" inputmode="decimal"> <span>calories</span></div>
+        </div>
+        <div class="actions">
+          <button type="submit">Check</button>
+          <button type="button" class="secondary" data-retry="q5" hidden>Try again</button>
+        </div>
+      </form>
+      <div class="feedback" id="fb5" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <div class="summary" id="summary" role="status" aria-live="polite">
+    <h2>Nice work! All 5 correct.</h2>
+    <p>You're ready for Learn 1.2: Types of Carbohydrates.</p>
+  </div>
+
+  <p><button type="button" class="secondary" id="resetAll">Start over</button></p>
+
+</div>
+
+<script>
+(function () {
+  var ids = ['q1', 'q2', 'q3', 'q4', 'q5'];
+  var solved = { q1: false, q2: false, q3: false, q4: false, q5: false };
+
+  function num(id) {
+    var v = document.getElementById(id).value.trim();
+    return v === '' ? null : parseFloat(v);
+  }
+
+  function show(n, ok, html) {
+    var fb = document.getElementById('fb' + n);
+    fb.className = 'feedback show ' + (ok ? 'good' : 'partial');
+    fb.innerHTML = '<h3>' + (ok ? 'Correct!' : 'Not quite.') + '</h3>' + html;
+  }
+
+  function nudge(n, msg) {
+    var fb = document.getElementById('fb' + n);
+    fb.className = 'feedback show partial';
+    fb.innerHTML = '<h3>Almost there</h3><p>' + msg + '</p>';
+  }
+
+  function lock(id, locked) {
+    var form = document.getElementById(id);
+    form.querySelectorAll('input').forEach(function (i) { i.disabled = locked; });
+    form.querySelector('button[type="submit"]').hidden = locked;
+    form.querySelector('[data-retry]').hidden = !locked;
+  }
+
+  function markChoices(form) {
+    var allRight = true, any = false;
+    form.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function (b) {
+      var right = b.hasAttribute('data-right');
+      var lbl = b.parentElement;
+      lbl.classList.remove('correct', 'wrong');
+      if (b.checked) { any = true; lbl.classList.add(right ? 'correct' : 'wrong'); }
+      if (b.checked !== right) allRight = false;
+    });
+    return { any: any, ok: allRight };
+  }
+
+  function update() {
+    var n = 0;
+    ids.forEach(function (k, i) {
+      document.getElementById('dot' + (i + 1)).classList.toggle('done', solved[k]);
+      if (solved[k]) n++;
+    });
+    document.getElementById('progressText').textContent = n + ' of 5 correct';
+    document.getElementById('summary').classList.toggle('show', n === 5);
+  }
+
+  function finish(id, ok, html) {
+    solved[id] = ok;
+    show(id.slice(1), ok, html);
+    lock(id, true);
+    update();
+  }
+
+  document.getElementById('q1').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var r = markChoices(this);
+    if (!r.any) { nudge(1, 'Select at least one element before checking.'); return; }
+    finish('q1', r.ok, r.ok
+      ? '<p>Carbohydrate = <strong>carb</strong>on + <strong>hydr</strong>ogen + <strong>o</strong>xygen. The name gives it away!</p>'
+      : '<p>Look at the name: "carbo-hydrate." Carbohydrates are made of three elements, and none of them is a mineral.</p>');
+  });
+
+  document.getElementById('q2').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var r = markChoices(this);
+    if (!r.any) { nudge(2, 'Choose an answer before checking.'); return; }
+    finish('q2', r.ok, r.ok
+      ? '<p>Plants capture energy from sunlight and store it as carbohydrate. We get that energy when we eat plant foods.</p>'
+      : '<p>Think about the "From Sunlight to Sugar" video. Which living things capture energy from the sun?</p>');
+  });
+
+  document.getElementById('q3').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var a = num('q3a');
+    if (a === null) { nudge(3, 'Enter a number before checking.'); return; }
+    var ok = Math.abs(a - 4) < 0.01;
+    finish('q3', ok, ok
+      ? '<p>Carbohydrates provide 4 calories per gram. You\'ll use this number for carbohydrate math in Learn 1.4.</p>'
+      : '<p>Check the flashcards on this page. The number is small, and you\'ll use it again in Learn 1.4.</p>');
+  });
+
+  document.getElementById('q4').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var r = markChoices(this);
+    if (!r.any) { nudge(4, 'Select at least one answer before checking.'); return; }
+    finish('q4', r.ok, r.ok
+      ? '<p>The brain, muscles, and blood cells rely most on carbohydrate (glucose) for fuel.</p>'
+      : '<p>Pick the tissues that are active and use a lot of energy. Hair and fingernails don\'t need fuel the same way.</p>');
+  });
+
+  document.getElementById('q5').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var a = num('q5a'), b = num('q5b');
+    if (a === null || b === null) { nudge(5, 'Answer both a) and b) before checking.'); return; }
+    var aOk = Math.abs(a - 45) < 0.01;
+    var bOk = Math.abs(b - 180) < 0.01 || (!aOk && Math.abs(b - a * 4) < 0.01);
+    var ok = aOk && Math.abs(b - 180) < 0.01;
+    var html = '<p><strong>a)</strong> ' + (aOk ? 'Correct: 15 + 18 + 12 = 45 g.' : 'Add one serving each of grains, fruit, and dairy from the table.') + '</p>';
+    html += '<p><strong>b)</strong> ' + (Math.abs(b - 180) < 0.01 ? 'Correct: 45 g × 4 calories per gram = 180 calories.'
+      : (bOk ? 'Your method is right (grams × 4), but fix part a) first.' : 'Multiply your grams of carbohydrate by 4 calories per gram.')) + '</p>';
+    finish('q5', ok, html);
+  });
+
+  function resetOne(id) {
+    var form = document.getElementById(id);
+    lock(id, false);
+    form.reset();
+    form.querySelectorAll('.opt').forEach(function (l) { l.classList.remove('correct', 'wrong'); });
+    var fb = document.getElementById('fb' + id.slice(1));
+    fb.className = 'feedback';
+    fb.innerHTML = '';
+    solved[id] = false;
+  }
+
+  document.querySelectorAll('[data-retry]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-retry');
+      resetOne(id);
+      update();
+      var first = document.getElementById(id).querySelector('input');
+      if (first) first.focus();
+    });
+  });
+
+  document.getElementById('resetAll').addEventListener('click', function () {
+    ids.forEach(resetOne);
+    update();
+    window.scrollTo(0, 0);
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>
