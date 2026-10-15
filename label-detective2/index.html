@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Label Detective: an interactive practice challenge on added sugar, hidden sugar names, and whole-grain label clues.">
+<title>Label Detective</title>
+<style>
+  :root {
+    --sage: #C2D3B5;
+    --sage-dark: #a9bd99;
+    --sage-light: #f3f7ef;
+    --line: #dfe7d7;
+    --ink: #1f2b18;
+    --muted: #4a5a40;
+    --good: #2f6b2a;
+    --good-bg: #e8f3e3;
+    --warn: #8a5a00;
+    --warn-bg: #fff4dc;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    background: #ffffff;
+    color: #2d2d2d;
+    font-family: 'Lato', 'Helvetica Neue', Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  .page-title { margin: 0 0 16px; padding: 14px 20px; background: var(--sage); border-radius: 8px; }
+  .page-title .eyebrow { margin: 0; font-size: .8em; letter-spacing: .08em; text-transform: uppercase; color: #3a4a30; font-weight: bold; }
+  .page-title h1 { margin: 2px 0 0; font-size: 1.6em; color: var(--ink); }
+  .case {
+    background: var(--ink); color: #fff; border-radius: 8px; padding: 18px 24px; margin-bottom: 24px;
+  }
+  .case .eyebrow { margin: 0 0 4px; font-size: .8em; letter-spacing: .12em; text-transform: uppercase; color: var(--sage); font-weight: bold; }
+  .case p { margin: 0; }
+  .progress { display: flex; gap: 8px; align-items: center; margin: 0 0 20px; color: var(--muted); font-size: .95em; }
+  .dots { display: flex; gap: 6px; }
+  .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--sage-dark); background: #fff; }
+  .dot.done { background: var(--sage-dark); }
+  .round { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 0 0 24px; }
+  .round-head { background: var(--sage); padding: 12px 20px; }
+  .round-head .eyebrow { display: block; font-size: .75em; letter-spacing: .08em; text-transform: uppercase; color: #3a4a30; font-weight: bold; }
+  .round-head h2 { margin: 0; font-size: 1.3em; color: var(--ink); }
+  .round-body { padding: 18px 20px; }
+  .placeholder {
+    border: 2px dashed #8fa57e; background: var(--sage-light); border-radius: 8px;
+    padding: 28px 20px; text-align: center; color: var(--muted); margin: 0 0 16px;
+  }
+  .placeholder strong { display: block; }
+  .placeholder em { font-size: .9em; }
+  .q { margin: 0 0 18px; }
+  .q > label, .q > .qtext { display: block; font-weight: bold; margin-bottom: 6px; color: var(--ink); }
+  .inline-input { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  input[type="number"] {
+    width: 120px; padding: 8px 10px; font-size: 1em; border: 2px solid var(--sage-dark); border-radius: 6px; font-family: inherit;
+  }
+  input[type="number"]:focus { outline: 3px solid #8fa57e; outline-offset: 1px; }
+  fieldset { border: none; margin: 0; padding: 0; }
+  legend { font-weight: bold; color: var(--ink); margin-bottom: 8px; padding: 0; }
+  .options { display: flex; flex-wrap: wrap; gap: 8px; }
+  .opt {
+    display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 2px solid var(--line);
+    border-radius: 20px; background: #fff; cursor: pointer; user-select: none;
+  }
+  .opt:has(input:checked) { border-color: var(--sage-dark); background: var(--sage-light); }
+  .opt.correct { border-color: var(--good); background: var(--good-bg); }
+  .opt.wrong { border-color: #b4542f; background: #fbebe4; }
+  .opt.missed { border-style: dashed; border-color: var(--good); }
+  .opt input { accent-color: #5d7a4a; width: 18px; height: 18px; margin: 0; }
+  .stack { flex-direction: column; align-items: stretch; }
+  .stack .opt { border-radius: 8px; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  button {
+    font-family: inherit; font-size: 1em; font-weight: bold; padding: 10px 20px; border-radius: 6px; cursor: pointer;
+    border: 2px solid var(--ink); background: var(--ink); color: #fff;
+  }
+  button:hover { background: #33452a; }
+  button.secondary { background: #fff; color: var(--ink); }
+  button.secondary:hover { background: var(--sage-light); }
+  button:focus-visible { outline: 3px solid #8fa57e; outline-offset: 2px; }
+  button[hidden] { display: none; }
+  .feedback { margin-top: 16px; border-radius: 6px; padding: 14px 18px; display: none; }
+  .feedback.show { display: block; }
+  .feedback.good { background: var(--good-bg); border-left: 6px solid var(--good); }
+  .feedback.partial { background: var(--warn-bg); border-left: 6px solid #d9a441; }
+  .feedback h3 { margin: 0 0 6px; font-size: 1.05em; }
+  .feedback.good h3 { color: var(--good); }
+  .feedback.partial h3 { color: var(--warn); }
+  .feedback p { margin: 4px 0; }
+  .feedback ul { margin: 4px 0; padding-left: 20px; }
+  .summary { background: var(--sage); border-radius: 8px; padding: 18px 24px; display: none; margin: 0 0 24px; }
+  .summary.show { display: block; }
+  .summary h2 { margin: 0 0 6px; color: var(--ink); }
+  .summary p { margin: 0 0 12px; color: var(--ink); }
+  .code { display: inline-block; background: #fff; border: 2px dashed var(--ink); border-radius: 6px; padding: 6px 14px; font-family: 'Courier New', monospace; font-size: 1.2em; font-weight: bold; letter-spacing: .08em; color: var(--ink); }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <header class="page-title">
+    <p class="eyebrow">Module 1: Carbohydrates</p>
+    <h1>Challenge: Label Detective</h1>
+  </header>
+
+  <div class="case">
+    <p class="eyebrow">Case File: The Roommate's Kitchen</p>
+    <p><strong style="color: var(--sage);">Scenario:</strong> Your roommate swears they "eat pretty healthy." You grab three items from their kitchen to investigate.</p>
+  </div>
+
+  <div class="progress" aria-live="polite">
+    <div class="dots" aria-hidden="true"><span class="dot" id="dot1"></span><span class="dot" id="dot2"></span><span class="dot" id="dot3"></span></div>
+    <span id="progressText">0 of 3 rounds solved</span>
+  </div>
+
+  <!-- Round 1 -->
+  <section class="round" aria-labelledby="r1title">
+    <div class="round-head"><span class="eyebrow">Round 1</span><h2 id="r1title">The Drink</h2></div>
+    <div class="round-body">
+      <div class="placeholder">
+        <strong>[Image: 01-06-02 - Iced Tea Label]</strong>
+        <em>Suggested: A Nutrition Facts label for a 20-oz iced tea showing 52 g sugar.</em>
+      </div>
+      <p>A 20-oz bottled iced tea lists <strong>52 g sugar</strong>.</p>
+      <form id="r1" novalidate>
+        <div class="q">
+          <label for="r1a">a) How many teaspoons is that?</label>
+          <div class="inline-input"><input type="number" id="r1a" step="any" inputmode="decimal"> <span>teaspoons</span></div>
+        </div>
+        <div class="q">
+          <label for="r1b">b) What percent of a woman's daily added-sugar limit is it?</label>
+          <div class="inline-input"><input type="number" id="r1b" step="any" inputmode="decimal"> <span>%</span></div>
+        </div>
+        <div class="actions">
+          <button type="submit">Submit</button>
+          <button type="button" class="secondary" data-retry="r1" hidden>Try again</button>
+        </div>
+      </form>
+      <div class="feedback" id="fb1" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- Round 2 -->
+  <section class="round" aria-labelledby="r2title">
+    <div class="round-head"><span class="eyebrow">Round 2</span><h2 id="r2title">The Granola Bar</h2></div>
+    <div class="round-body">
+      <div class="placeholder">
+        <strong>[Image: 01-06-03 - Granola Bar Ingredients]</strong>
+        <em>Suggested: An ingredient list printed on a granola bar wrapper: rolled oats, brown rice syrup, honey, dextrose, almonds, invert sugar, salt.</em>
+      </div>
+      <form id="r2" novalidate>
+        <fieldset class="q">
+          <legend>Ingredients: Select every added sugar.</legend>
+          <div class="options">
+            <label class="opt"><input type="checkbox" value="rolled oats"> rolled oats</label>
+            <label class="opt"><input type="checkbox" value="brown rice syrup" data-sugar> brown rice syrup</label>
+            <label class="opt"><input type="checkbox" value="honey" data-sugar> honey</label>
+            <label class="opt"><input type="checkbox" value="dextrose" data-sugar> dextrose</label>
+            <label class="opt"><input type="checkbox" value="almonds"> almonds</label>
+            <label class="opt"><input type="checkbox" value="invert sugar" data-sugar> invert sugar</label>
+            <label class="opt"><input type="checkbox" value="salt"> salt</label>
+          </div>
+        </fieldset>
+        <div class="q">
+          <label for="r2count">How many added sugars did you find?</label>
+          <div class="inline-input"><input type="number" id="r2count" min="0" step="1" inputmode="numeric"></div>
+        </div>
+        <div class="actions">
+          <button type="submit">Submit</button>
+          <button type="button" class="secondary" data-retry="r2" hidden>Try again</button>
+        </div>
+      </form>
+      <div class="feedback" id="fb2" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- Round 3 -->
+  <section class="round" aria-labelledby="r3title">
+    <div class="round-head"><span class="eyebrow">Round 3</span><h2 id="r3title">The Bread</h2></div>
+    <div class="round-body">
+      <div class="placeholder">
+        <strong>[Image: 01-06-04 - "Honey Wheat" Bread]</strong>
+        <em>Suggested: The front of a bread bag reading "Honey Wheat" beside its ingredient list, which starts with "enriched wheat flour."</em>
+      </div>
+      <form id="r3" novalidate>
+        <fieldset class="q">
+          <legend>Is it whole grain?</legend>
+          <div class="options">
+            <label class="opt"><input type="radio" name="r3whole" value="yes"> Yes</label>
+            <label class="opt"><input type="radio" name="r3whole" value="no"> No</label>
+          </div>
+        </fieldset>
+        <fieldset class="q">
+          <legend>What two clues tell you? Select two.</legend>
+          <div class="options stack">
+            <label class="opt"><input type="checkbox" value="wheat" data-clue> The label says "Wheat," not "100% whole wheat."</label>
+            <label class="opt"><input type="checkbox" value="enriched" data-clue> "Enriched wheat flour" is the first ingredient.</label>
+            <label class="opt"><input type="checkbox" value="honey"> It contains honey.</label>
+            <label class="opt"><input type="checkbox" value="color"> The bread is brown.</label>
+          </div>
+        </fieldset>
+        <div class="actions">
+          <button type="submit">Submit</button>
+          <button type="button" class="secondary" data-retry="r3" hidden>Try again</button>
+        </div>
+      </form>
+      <div class="feedback" id="fb3" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <div class="summary" id="summary" role="status" aria-live="polite">
+    <h2>Case closed!</h2>
+    <p>You solved all three rounds. Your roommate's "pretty healthy" kitchen had more added sugar and less whole grain than it looked.</p>
+    <p><strong>Completion code:</strong> <span class="code">CASE-CLOSED</span></p>
+    <p>Submit this code to the Label Detective assignment in Canvas.</p>
+  </div>
+
+  <p><button type="button" class="secondary" id="resetAll">Start the challenge over</button></p>
+
+</main>
+
+<script>
+(function () {
+  var solved = { r1: false, r2: false, r3: false };
+
+  function num(id) {
+    var v = document.getElementById(id).value.trim().replace('%', '');
+    return v === '' ? null : parseFloat(v);
+  }
+
+  function show(fbId, ok, title, html) {
+    var fb = document.getElementById(fbId);
+    fb.className = 'feedback show ' + (ok ? 'good' : 'partial');
+    fb.innerHTML = '<h3>' + title + '</h3>' + html;
+  }
+
+  function lock(formId, locked) {
+    var form = document.getElementById(formId);
+    form.querySelectorAll('input').forEach(function (i) { i.disabled = locked; });
+    form.querySelector('button[type="submit"]').hidden = locked;
+    form.querySelector('[data-retry]').hidden = !locked;
+  }
+
+  function updateProgress() {
+    var n = 0;
+    ['r1', 'r2', 'r3'].forEach(function (k, i) {
+      document.getElementById('dot' + (i + 1)).classList.toggle('done', solved[k]);
+      if (solved[k]) n++;
+    });
+    document.getElementById('progressText').textContent = n + ' of 3 rounds solved';
+    document.getElementById('summary').classList.toggle('show', n === 3);
+  }
+
+  // Round 1
+  document.getElementById('r1').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var a = num('r1a'), b = num('r1b');
+    if (a === null || b === null) {
+      show('fb1', false, 'Almost there', '<p>Enter an answer for both a) and b) before submitting.</p>');
+      return;
+    }
+    var aOk = Math.abs(a - 13) < 0.01;
+    var bOk = b >= 205 && b <= 210;
+    var html = '<ul>';
+    html += '<li><strong>a) ' + (aOk ? 'Correct.' : 'Not quite.') + '</strong> ' +
+      (aOk ? '52 ÷ 4 = 13 teaspoons.' : 'Remember: 4 grams of sugar = 1 teaspoon. Divide the grams by 4.') + '</li>';
+    html += '<li><strong>b) ' + (bOk ? 'Correct.' : 'Not quite.') + '</strong> ' +
+      (bOk ? '52 ÷ 25 = about 208%, more than double the daily limit.' : 'A woman\'s daily limit is 25 g. Divide the grams in the drink by 25, then multiply by 100.') + '</li>';
+    html += '</ul>';
+    solved.r1 = aOk && bOk;
+    show('fb1', solved.r1, solved.r1 ? 'Case cracked!' : 'Keep investigating', html);
+    lock('r1', true);
+    updateProgress();
+  });
+
+  // Round 2
+  document.getElementById('r2').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var boxes = this.querySelectorAll('input[type="checkbox"]');
+    var anyChecked = false, allRight = true, found = 0, wrongPicks = [];
+    boxes.forEach(function (b) {
+      var isSugar = b.hasAttribute('data-sugar');
+      var lbl = b.parentElement;
+      lbl.classList.remove('correct', 'wrong', 'missed');
+      if (b.checked) anyChecked = true;
+      if (b.checked && isSugar) { lbl.classList.add('correct'); found++; }
+      else if (b.checked && !isSugar) { lbl.classList.add('wrong'); allRight = false; wrongPicks.push(b.value); }
+      else if (!b.checked && isSugar) { allRight = false; }
+    });
+    var count = num('r2count');
+    if (!anyChecked || count === null) {
+      show('fb2', false, 'Almost there', '<p>Select the added sugars and enter how many you found before submitting.</p>');
+      boxes.forEach(function (b) { b.parentElement.classList.remove('correct', 'wrong', 'missed'); });
+      return;
+    }
+    var countOk = count === 4;
+    solved.r2 = allRight && countOk;
+    var html;
+    if (solved.r2) {
+      html = '<p>Four added sugars: brown rice syrup, honey, dextrose, and invert sugar. Several smaller sugars can add up to a lot.</p>';
+    } else {
+      html = '<ul>';
+      if (found < 4) html += '<li>You found ' + found + ' of the added sugars. Look again for syrups, "-ose" words, and anything with "sugar" in the name.</li>';
+      if (wrongPicks.length) html += '<li>' + wrongPicks.join(', ') + (wrongPicks.length > 1 ? ' are' : ' is') + ' not an added sugar.</li>';
+      if (!countOk) html += '<li>Your count doesn\'t match the number of added sugars on the list.</li>';
+      html += '</ul>';
+    }
+    show('fb2', solved.r2, solved.r2 ? 'Case cracked!' : 'Keep investigating', html);
+    lock('r2', true);
+    updateProgress();
+  });
+
+  // Round 3
+  document.getElementById('r3').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var pick = this.querySelector('input[name="r3whole"]:checked');
+    var clues = this.querySelectorAll('input[type="checkbox"]');
+    var checked = Array.prototype.filter.call(clues, function (c) { return c.checked; });
+    if (!pick || checked.length === 0) {
+      show('fb3', false, 'Almost there', '<p>Answer whether it\'s whole grain and select your clues before submitting.</p>');
+      return;
+    }
+    var wholeOk = pick.value === 'no';
+    var cluesOk = checked.length === 2 && checked.every(function (c) { return c.hasAttribute('data-clue'); });
+    clues.forEach(function (c) {
+      var lbl = c.parentElement;
+      lbl.classList.remove('correct', 'wrong');
+      if (c.checked) lbl.classList.add(c.hasAttribute('data-clue') ? 'correct' : 'wrong');
+    });
+    solved.r3 = wholeOk && cluesOk;
+    var html = '<ul>';
+    html += '<li><strong>' + (wholeOk ? 'Correct.' : 'Not quite.') + '</strong> ' +
+      (wholeOk ? 'It is not whole grain.' : 'Look at what the front of the bag actually says, and at the first ingredient.') + '</li>';
+    html += '<li><strong>Clues: ' + (cluesOk ? 'Correct.' : 'Not quite.') + '</strong> ' +
+      (cluesOk ? '"Wheat" doesn\'t mean whole wheat, and enriched flour is listed first.'
+               : 'Pick the two clues that come from the label wording and the ingredient list. Color and honey don\'t tell you whether a grain is whole.') + '</li>';
+    html += '</ul>';
+    show('fb3', solved.r3, solved.r3 ? 'Case cracked!' : 'Keep investigating', html);
+    lock('r3', true);
+    updateProgress();
+  });
+
+  // Try again buttons
+  document.querySelectorAll('[data-retry]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-retry');
+      var form = document.getElementById(id);
+      lock(id, false);
+      form.reset();
+      form.querySelectorAll('.opt').forEach(function (l) { l.classList.remove('correct', 'wrong', 'missed'); });
+      var fb = document.getElementById('fb' + id.slice(1));
+      fb.className = 'feedback';
+      fb.innerHTML = '';
+      solved[id] = false;
+      updateProgress();
+      var first = form.querySelector('input');
+      if (first) first.focus();
+    });
+  });
+
+  document.getElementById('resetAll').addEventListener('click', function () {
+    ['r3', 'r2', 'r1'].forEach(function (id) {
+      var form = document.getElementById(id);
+      lock(id, false);
+      form.reset();
+      form.querySelectorAll('.opt').forEach(function (l) { l.classList.remove('correct', 'wrong', 'missed'); });
+      var fb = document.getElementById('fb' + id.slice(1));
+      fb.className = 'feedback';
+      fb.innerHTML = '';
+      solved[id] = false;
+    });
+    updateProgress();
+    window.scrollTo(0, 0);
+  });
+
+  updateProgress();
+})();
+</script>
+</body>
+</html>
